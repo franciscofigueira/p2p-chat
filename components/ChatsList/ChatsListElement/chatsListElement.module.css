@@ -1,0 +1,16 @@
+.container{
+    padding: 1rem;
+}
+.containerHighlight{
+    padding: 1rem;
+    background-color: rgb(41, 46, 65);
+}
+.topRow{
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.2rem;
+}
+.bottomRow{
+    display: flex;
+    justify-content: space-between;
+}

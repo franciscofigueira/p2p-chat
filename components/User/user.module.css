@@ -1,0 +1,32 @@
+.container{
+    margin: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.infoContainer{
+    display: inline-flex;
+    align-items: center;
+
+}
+
+.infoContainer p{
+    margin-right: 0.8rem;
+}
+
+.infoContainer button{
+    border: none;
+    background: none;
+}
+
+.infoContainer button:hover{
+    cursor: pointer;
+}
+
+.infoContainer svg:hover{
+    filter: drop-shadow(3px 5px 2px rgb(255 255 255 /0.2)); 
+}
+
+.infoContainer svg{
+    fill: grey
+}

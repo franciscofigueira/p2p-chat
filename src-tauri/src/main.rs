@@ -21,11 +21,14 @@ use libp2p::{
   Multiaddr, PeerId, Transport, yamux, tcp
 };
 use tokio::sync::{Mutex, MutexGuard};
-//use std::sync::Mutex;
+
 struct SystemState{
   msg_sender: Mutex<Sender<String>>,
   identify_sender: Mutex<Sender<String>>,
-  peer_id: Mutex<String>,
+}
+
+struct MultiAddr{
+  address: Mutex<String>,
 }
 
 fn main() {
@@ -39,7 +42,6 @@ fn main() {
     .manage( SystemState{
       msg_sender: Mutex::new(msg_sender_channel),
       identify_sender: Mutex::new(identify_sender_channel),
-      peer_id: Mutex::new(swarm.local_peer_id().to_string())
     }
     )
     .setup(|app|{
@@ -89,6 +91,8 @@ fn main() {
             },
             SwarmEvent::NewListenAddr { address, .. } => {
                       let id = swarm.local_peer_id();
+                      
+                      app_handle.manage(MultiAddr{address: Mutex::new(format!("{address}/p2p/{id}"))});
                       println!("Local node is listening on {address}/p2p/{id}");
             },
             SwarmEvent::Behaviour(MyBehaviourEvent::Ping(event)) => {
@@ -147,12 +151,12 @@ fn greet(name: &str) -> String {
    format!("Hello, {}!", name)
 }
 
+
 #[tauri::command]
-async fn get_peer_id(state: tauri::State<'_, SystemState>) -> Result<String,()> {
-  let s = state.peer_id.lock().await;
+async fn get_peer_id(state: tauri::State<'_, MultiAddr>) -> Result<String,()> {
+  let s = state.address.lock().await;
   let s1 = s.clone();
   Ok(s1)
-  // format!("Hello, {}!", name)
 }
 
 #[tauri::command]

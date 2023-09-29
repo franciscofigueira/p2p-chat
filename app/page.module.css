@@ -1,0 +1,36 @@
+.container{
+    display: flex;
+    height: 100vh;
+    
+}
+
+.rightSide{
+    width: 50%;
+    border-right: 1px solid black;
+
+}
+
+.leftSide{
+    width: 50%;
+}
+
+.buttonContainer{
+    display: flex;
+    justify-content:space-between;
+    width: 50%;
+    position:absolute;
+    bottom: 0;
+
+}
+
+.buttonContainer button{
+    border: none;
+    height: 2rem;
+    width: 100%;
+    padding: 0.2rem;
+    cursor: pointer;
+    background: #2196F3;
+}
+.buttonContainer button:hover{
+    background: #66BB6A;
+}

@@ -93,6 +93,12 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb)); */
+    background: #1E1E1E;
+    color: white;
+}
+
+button{
+  color: inherit;
 }
 
 a {

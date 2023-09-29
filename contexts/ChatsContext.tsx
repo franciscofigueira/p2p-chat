@@ -35,11 +35,11 @@ export type ChatType = {
 }
 
 export type ChatsContextTypes = {
-    chats: Map<string, ChatType>
+    chats: {[key:string]:ChatType},
     peer_id: string 
     public_key: string
     selected_chat: string | undefined
-    setChats: Dispatch<SetStateAction<Map<string, ChatType>>>
+    setChats: Dispatch<SetStateAction<{[key:string]:ChatType}>>
     setSelectedChat: Dispatch<SetStateAction<string | undefined>>
 
     sendMessage: (message: string) => void
@@ -49,7 +49,7 @@ export type ChatsContextTypes = {
 }
 
 export const ChatsContext = createContext<ChatsContextTypes>({
-    chats: new Map<string, ChatType>([]),
+    chats: {},
     peer_id: "",
     public_key: "",
     selected_chat: undefined,
@@ -69,11 +69,12 @@ interface Props {
 export default function ChatsProvider({children}: Props) {
     const [selected_chat, setSelectedChat] = useState<string | undefined>(undefined)
 
-    const [chats, setChats] = useState<Map<string, ChatType>>(new Map<string, ChatType>([]))
+    const [chats, setChats] = useState< {[key:string]:ChatType}>({})
     const [peer_id, setPeer_id] = useState<string>("")
     const [private_key, setPrivate_Key] = useState<Buffer>(Buffer.from("72a68370bc044eb10ecd191c83662e152ff19a874a4f5c05506a6e22beb99dec", "hex"))
     const [public_key, setPublicKey] = useState<string>("048e6265577e280221de5e3f2a6b2b9def346a5bf81c2f9daee9e8734580e40a5c8a65aec23fca6861eaf95b7431c5e49b111638887e304c183a38f36634cae3f0")
 
+   
 
     useEffect(() => {
         const privateKey = Buffer.from("72a68370bc044eb10ecd191c83662e152ff19a874a4f5c05506a6e22beb99dec", "hex")//ecc.generatePrivate()
@@ -91,45 +92,61 @@ export default function ChatsProvider({children}: Props) {
     }, [])
 
     const createChat = (pub_key: string) => {
-        const chat = chats.get(pub_key)
+       const chat = chats[pub_key]
         if (chat) {
             return
         } else{
-            setChats(chats.set(pub_key, {
-                participant_public_key: pub_key,
-                messages: [],
-                latest_message_timestamp: '0'
-            }))
+         
+            setChats((chats)=>{
+                const newChats = {... chats}
+                newChats[pub_key] = {
+                        participant_public_key: pub_key,
+                        messages: [],
+                        latest_message_timestamp: '0'
+                    }
+                return newChats
+            })
         }
     }
 
     const sendMessage = async (messageToSend: string) => {
         console.log("Message sent")
-        const chat = chats.get(selected_chat!)
-
-        const formatedMessage = {
-            from_public_key: public_key,
-            to_public_key: chat?.participant_public_key!,
-            sent_timestamp: (Date.now() / 1000).toString(),
-            text: messageToSend
-        }
-        const message_to_send = await encryptMessage(formatedMessage)
-        console.log(messageToSend)
+       
         if (selected_chat) {
-              const chat = chats.get(selected_chat)
+              
+                const chat = chats[selected_chat!]
+                const formatedMessage = {
+                    from_public_key: public_key,
+                    to_public_key: chat?.participant_public_key!,
+                    sent_timestamp: (Date.now() / 1000).toString(),
+                    text: messageToSend
+                }
+                const message_to_send = await encryptMessage(formatedMessage)
+                console.log(messageToSend)
+
               if (chat) {
                     invoke<string>("send_message", {msg: message_to_send})
-                          .then((message) => {
-                          })
+                          .then((message) => {})
                           .catch(console.error)
                         chat.messages.push(
                           {
-                                sender_peer_id: peer_id,
-                                received_timestamp: (Date.now() / 1000).toString(),
-                                content: formatedMessage,
+                            sender_peer_id: peer_id,
+                            received_timestamp: (Date.now() / 1000).toString(),
+                            content: formatedMessage,
                           }
-                    )
-                    setChats(chats.set(selected_chat, chat))
+                        )
+                        chat.latest_message_timestamp = (Date.now() / 1000).toString()
+                    
+                   
+                    setChats((chats)=>{
+                        const newChats = {... chats}
+                        newChats[selected_chat] = chat
+                        return newChats
+                    })      
+
+                    // setChats( {
+                    //    ... chats
+                    // })
               }
         }
     }
@@ -154,18 +171,7 @@ export default function ChatsProvider({children}: Props) {
     useEffect(() => {
         const unListen = listen("identify", (e: TauriEvent<any>) => {
               console.log(e.payload, "identify")
-            //   setChats(chats.set(e.payload,
-            //         {
-            //               participant_public_key: undefined,
-            //               messages: [
-            //                     {
-            //                         sender_peer_id: e.payload,
-            //                         received_timestamp: (Date.now() / 1000).toString(),
-            //                         content: `Connected to ${e.payload.slice(0, 10)}`,
-            //                     }],
-            //               latest_message_timestamp: Date.now().toString()
-            //         }
-            //   ))
+           
         })
         return () => {
               unListen.then((f) => f())
@@ -177,31 +183,32 @@ export default function ChatsProvider({children}: Props) {
               console.log("message received", e)
               // sets3(`message received  ${e.payload[1]} from   ${e.payload[0]}`)
 
-             
-            const p2p_msg: P2PMessageType = JSON.parse(e.payload[1])
-            console.log(p2p_msg.to_public_key)
-            console.log(public_key)
-            let parsedMessage: EncryptedMessageType
-            if (public_key != p2p_msg.to_public_key){
-                console.log("returned")
-                return 
-            } else{
-                console.log("continued")
-                const encrypted = parseEncryptedMessage(p2p_msg.encrypted)
-                console.log("encrypted",encrypted)
-                let dec = await ecc.decrypt(private_key,encrypted)
-                let message = dec.toString('utf16le')
-                parsedMessage= JSON.parse(message)
-                console.log("parsed",parsedMessage)
-                console.log(parsedMessage)
-            }
-
-              const chat = chats.get(parsedMessage.from)
-
-              console.log(chat)
-              if (chat) {
-                    chat.messages.push(
-                          {
+            try {
+                const p2p_msg: P2PMessageType = JSON.parse(e.payload[1])
+                console.log(p2p_msg.to_public_key)
+                console.log(public_key)
+                let parsedMessage: EncryptedMessageType
+                if (public_key != p2p_msg.to_public_key){
+                    console.log("returned")
+                    return 
+                } else{
+                    console.log("continued")
+                    const encrypted = parseEncryptedMessage(p2p_msg.encrypted)
+                    console.log("encrypted",encrypted)
+                    let dec = await ecc.decrypt(private_key,encrypted)
+                    let message = dec.toString('utf16le')
+                    parsedMessage= JSON.parse(message)
+                    console.log("parsed",parsedMessage)
+                
+                }
+                
+                  //const chat = chats.get(parsedMessage.from)
+                  const chat = chats[parsedMessage.from]
+    
+                  console.warn(chat,"chat on message received")
+                  if (chat) {
+                        chat.messages.push(
+                              {
                                 sender_peer_id: e.payload[0],
                                 received_timestamp: (Date.now() / 1000).toString(),
                                 content: {
@@ -210,33 +217,45 @@ export default function ChatsProvider({children}: Props) {
                                     text: parsedMessage.text,
                                     sent_timestamp: parsedMessage.sent_timestamp
                                 },
-                          }
-                    )
-                    setChats(chats.set(parsedMessage.from, chat))
-              } else {
-                    
-                setChats(chats.set(parsedMessage.from, {
-                    participant_public_key: parsedMessage.from,
-                    messages: [{
-                        sender_peer_id: e.payload[0],
-                        received_timestamp: (Date.now() / 1000).toString(),
-                        content: {
-                            from_public_key: parsedMessage.from,
-                            to_public_key: public_key,
-                            text: parsedMessage.text,
-                            sent_timestamp: parsedMessage.sent_timestamp
-                        },
-                  }],
-                    latest_message_timestamp: parsedMessage.sent_timestamp
-                }))
-                setSelectedChat(parsedMessage.from)
-              }
-
+                              }
+                        )
+                        chat.latest_message_timestamp = (Date.now() / 1000).toString()
+                        
+                        setChats((chats)=> {
+                            const newChats = {...chats}
+                            newChats[parsedMessage.from] = chat
+                            return newChats
+                        })
+                  } else {
+                                           
+                    setChats((chats)=> {
+                        const newChats = {...chats}
+                        newChats[parsedMessage.from] = {
+                                participant_public_key: parsedMessage.from,
+                                messages: [{
+                                    sender_peer_id: e.payload[0],
+                                    received_timestamp: (Date.now() / 1000).toString(),
+                                    content: {
+                                        from_public_key: parsedMessage.from,
+                                        to_public_key: public_key,
+                                        text: parsedMessage.text,
+                                        sent_timestamp: parsedMessage.sent_timestamp
+                                    },
+                              }],
+                                latest_message_timestamp: parsedMessage.sent_timestamp
+                            }
+                        return newChats
+                    })
+                    setSelectedChat(parsedMessage.from)
+                  }
+            } catch (error) {
+                console.log(error)
+            } 
         })
         return () => {
               unListen.then((f) => f())
         }
-  }, [])
+    },[chats])
 
   return (
         <ChatsContext.Provider

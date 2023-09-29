@@ -18,11 +18,15 @@ export default function User(){
     return(
     
         <div className={styles.container}>
-            <p>Public Key: {`${public_key.slice(0, 10)}...${public_key.slice(-10, -1)}`}</p> 
-            <button onClick={() => copy(public_key)}>{copyIcon}</button>
-
-            <p>Peer ID: {`${peer_id.slice(0, 10)}...${peer_id.slice(-10, -1)}`}</p> 
-            <button onClick={() => copy(peer_id)}>{copyIcon}</button>
+            Profile:
+            <div className={styles.infoContainer}>
+                <p>Public Key: {`${public_key.slice(0, 10)}...${public_key.slice(-10, -1)}`}</p> 
+                <button onClick={() => copy(public_key)}>{copyIcon}</button>
+            </div>
+            <div className={styles.infoContainer}>
+                <p>Address: {`${peer_id.slice(0, 10)}...${peer_id.slice(-10, -1)}`}</p> 
+                <button onClick={() => copy(peer_id)}>{copyIcon}</button>
+            </div>
         </div>
 
     )

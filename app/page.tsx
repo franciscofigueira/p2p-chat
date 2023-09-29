@@ -17,18 +17,21 @@ export default function Home() {
   return (
     <>
     <div className={styles.container}>
-
-    <ChatsList/>
-      <Chat/>
-      <User/>
-    <button onClick={
-                  () => {
-                    setDisplay(true)
-                  }
-            }>Connect to Peer
-            </button>
-            < CreateChat close={close} show={display}/>
+    < CreateChat close={close} show={display}/>
+      <div className={styles.rightSide}>
+        <User/>
+        <ChatsList/>
+        <div className={styles.buttonContainer}>
+          <button className={styles.peerButton} onClick={() => {setDisplay(true)}}>
+            Start Chat \ Connect to Peer 
+          </button>
+        </div> 
       </div>
+      <div className={styles.leftSide}>
+        <Chat/>
+      </div>
+
+    </div>
     </>
   )
 }

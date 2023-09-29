@@ -15,4 +15,26 @@
 .show {
     opacity: 1;
     pointer-events: all;
+    display: flex;
+    flex-direction: column;
+}
+
+.input{
+    border-radius: 5px;
+    margin: 1rem;
+    width: 40%;
+    height: 1.5rem;
+}
+
+.button{
+    border: none;
+    cursor: pointer;
+    padding: 0.2rem;
+    background: #2196F3;
+    border-radius: 5px;
+    font-size: 1.2rem;
+}
+
+.button:hover{
+    background:#66BB6A;
 }

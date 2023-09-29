@@ -27,13 +27,14 @@ export default function ChatsListElement({lastMessage, participant_pub_key, isSe
     }
 
     return (
-        <div className={styles.container}>
-            <div>
+        <div className={isSelectedChat? styles.containerHighlight: styles.container}>
+            <div className={styles.topRow}>
                <p> {`${participant_pub_key.slice(0, 10)}...${participant_pub_key.slice(-10, -1)}`}</p>
                <p>{formattedTime}</p>
-            </div>
-            <div>
-            <p>{lastMessage.content.text}</p>
+            </div >
+            <div className={styles.bottomRow}>
+                <p>{lastMessage.content.text}</p>
+                <p></p>
             </div>
         </div>
     )
